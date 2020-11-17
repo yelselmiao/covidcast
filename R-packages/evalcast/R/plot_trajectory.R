@@ -54,12 +54,25 @@ plot_trajectory <- function(list_of_predictions_cards,
                       ahead = attributes(predictions_card)$ahead,
                       prob_type = dplyr::case_when(
                         abs(probs - plot_probs[1]) <= 1e-8 ~ "lower",
-                        abs(probs - plot_probs[2]) <= 1e-8 ~ "point",
-                        abs(probs - plot_probs[3]) <= 1e-8 ~ "upper")) %>%
-                    filter(!is.na(.data$prob_type)) %>%
-                    dplyr::mutate(target_period = get_target_period_num(fcast_date,.data$ahead,incidence_period)) %>%
+                        abs(probs - plot_probs[2]) <= 1e-8 ~ "median",
+                        abs(probs - plot_probs[3]) <= 1e-8 ~ "upper",
+                        is.na(probs) ~ "point")) %>%
+                    filter(!is.na(.data$prob_type)) 
+                  
+                  if (sum(predictions_card$prob_type=="point") == 
+                      sum(predictions_card$prob_type=="median")) {
+                    predictions_card <- predictions_card %>% 
+                      filter(.data$prob_type != "median")
+                  } else {
+                    predictions_card <- predictions_card %>% 
+                      filter(.data$prob_type != "point") %>%
+                      mutate(prob_type = str_replace(.data$prob_type, 
+                                                     "median", "point"))
+                  }
+                  predictions_card %>%
+                    mutate(target_period = get_target_period_num(fcast_date,.data$ahead,incidence_period)) %>%
                     dplyr::select(.data$location,.data$quantiles,.data$forecaster_name,.data$prob_type,.data$target_period) %>%
-                    tidyr::pivot_wider(values_from = .data$quantiles,names_from = .data$prob_type)
+                    pivot_wider(values_from = .data$quantiles,names_from = .data$prob_type)
                 })
   
   # ground truth to plot
@@ -75,8 +88,7 @@ plot_trajectory <- function(list_of_predictions_cards,
   } else {
     # avoid summing over partial epiweeks
     date_range <- covidcast::covidcast_meta() %>% 
-      dplyr::filter(data_source == "usa-facts" & signal == response$signal & geo_type == !!geo_type) %>%
-      #dplyr::filter(data_source == response$data_source & signal == response$signal & geo_type == !!geo_type) %>%
+      dplyr::filter(data_source == response$data_source & signal == response$signal & geo_type == !!geo_type) %>%
       dplyr::select(min_time,max_time)
     
     sunday_following_first_day <- shift_day_to_following_xxxday(max(ymd(date_range$min_time,first_day)),xxx = 1)
@@ -84,7 +96,7 @@ plot_trajectory <- function(list_of_predictions_cards,
     assertthat::assert_that(sunday_following_first_day < saturday_preceding_last_day,
                             msg = "Pick first and last day to span at least one full epiweek.")
     
-    response_df <- download_signal(data_source = "usa-facts",#response$data_source,
+    response_df <- download_signal(data_source = response$data_source,
                                    signal = response$signal,
                                    start_day = sunday_following_first_day,
                                    end_day = saturday_preceding_last_day,

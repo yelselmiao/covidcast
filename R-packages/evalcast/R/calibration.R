@@ -4,6 +4,7 @@
 #' @importFrom dplyr group_by summarize mutate select
 compute_actual_vs_nominal_prob <- function(score_card) {
   nominal_probs <- score_card$forecast_distribution[[1]]$probs
+  nominal_probs <- nominal_probs[!is.na(nominal_probs)]
   as.list(1:length(nominal_probs)) %>%
     map_dfr(function(i) {
       score_card %>%
@@ -25,6 +26,7 @@ compute_coverage <- function(score_card) {
   assert_that(nrow(score_card) != 0,
               msg="Can't compute coverage for an empty score_card.")
   probs <- score_card$forecast_distribution[[1]]$probs
+  probs <- probs[!is.na(probs)]
   assert_that(length(probs) %% 2 == 1 && all(abs(probs + rev(probs) - 1) < 1e-3),
               msg="Quantile levels need to be symmetric around 0.5 (and include 0.5).")
   num_intervals <- (length(probs) - 1) / 2
@@ -33,8 +35,10 @@ compute_coverage <- function(score_card) {
     map_dfr(function(i) {
       itop <- length(probs) - i + 1
       score_card %>%
-        mutate(is_below = .data$actual < map_dbl(.data$forecast_distribution, ~ .x$quantiles[i]),
-               is_above = .data$actual > map_dbl(.data$forecast_distribution, ~ .x$quantiles[itop]),
+        mutate(is_below = .data$actual < 
+                 map_dbl(.data$forecast_distribution, ~ .x$quantiles[!is.na(.x$probs)][i]),
+               is_above = .data$actual > 
+                 map_dbl(.data$forecast_distribution, ~ .x$quantiles[!is.na(.x$probs)][itop]),
                is_covered = !.data$is_below & !.data$is_above) %>%
         group_by(.data$forecast_date) %>%
         summarize(prop_below = mean(.data$is_below, na.rm = TRUE),
@@ -53,14 +57,17 @@ compute_coverage <- function(score_card) {
 #' @importFrom assertthat assert_that
 compute_calibration <- function(score_card) {
   probs <- score_card$forecast_distribution[[1]]$probs
+  probs <- probs[!is.na(probs)]
   assert_that(length(probs) %% 2 == 1 && all(abs(probs + rev(probs) - 1) < 1e-3),
               msg="Quantile levels need to be symmetric around 0.5 (and include 0.5).")
   as.list(1:length(probs)) %>%
     map_dfr(function(i) {
       # itop <- length(probs) - i + 1
       score_card %>%
-        mutate(is_below = .data$actual < map_dbl(.data$forecast_distribution, ~ .x$quantiles[i]),
-               is_above = .data$actual > map_dbl(.data$forecast_distribution, ~ .x$quantiles[i])) %>%
+        mutate(is_below = .data$actual < 
+                 map_dbl(.data$forecast_distribution, ~ .x$quantiles[!is.na(.x$probs)][i]),
+               is_above = .data$actual > 
+                 map_dbl(.data$forecast_distribution, ~ .x$quantiles[!is.na(.x$probs)][i])) %>%
         group_by(.data$forecast_date) %>%
         summarize(prop_below = mean(.data$is_below, na.rm = TRUE),
                   prop_above = mean(.data$is_above, na.rm = TRUE))

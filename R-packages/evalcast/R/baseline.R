@@ -53,15 +53,16 @@ baseline_forecaster <- function(df,
         dplyr::mutate(summed = zoo::rollsum(.data$value,
                                             k = incidence_length,
                                             fill = NA,
-                                            align = "right"),
+                                            align = "right",
+                                            na.rm = TRUE),
                       resid = .data$summed - dplyr::lag(.data$summed, n = incidence_length * a)) %>%
         dplyr::select(.data$location, .data$time_value, .data$value, .data$summed, .data$resid) %>%
         dplyr::group_modify(~ {
-            point <- .x$summed[.x$time_value == max(.x$time_value)]
-            tibble::tibble(probs = covidhub_probs,
-                           quantiles = point + stats::quantile(c(.x$resid, s * .x$resid),
+            point <- .x$summed[.x$time_value == max(.x$time_value[!is.na(.x$summed)])]
+            tibble::tibble(probs = c(covidhub_probs, NA),
+                           quantiles = point + c(stats::quantile(c(.x$resid, s * .x$resid),
                                                                probs = covidhub_probs,
-                                                               na.rm = TRUE))
+                                                               na.rm = TRUE),0))
         }, .keep = TRUE) %>%
         dplyr::ungroup() %>%
         dplyr::mutate(quantiles = pmax(.data$quantiles, 0))

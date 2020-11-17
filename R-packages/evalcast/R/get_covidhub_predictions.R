@@ -26,7 +26,8 @@
 #' @importFrom stringr str_detect
 #' @export
 get_covidhub_predictions <- function(covid_hub_forecaster_name,
-                                     forecast_dates = NULL, ...) {
+                                     forecast_dates = NULL, 
+                                     include_point = TRUE, ...) {
   url <- "https://raw.githubusercontent.com/reichlab/covid19-forecast-hub/master/data-processed"
   pcards <- list()
   if (is.null(forecast_dates))
@@ -49,10 +50,12 @@ get_covidhub_predictions <- function(covid_hub_forecaster_name,
                        target_end_date = col_date(format = ""),
                        type = col_character()
                      ))
+    keep_point_fcasts <- c("quantile","point")
+    if (!include_point) keep_point_fcasts = keep_point_fcasts[1]
     pcards[[forecast_date]] <- pred %>%
       rename(probs = .data$quantile, quantiles = .data$value) %>%
       filter(str_detect(.data$target, "wk ahead inc")) %>%
-      filter(.data$type == "quantile") %>%
+      filter(.data$type %in% keep_point_fcasts) %>%
       separate(.data$target,
                into = c("ahead", NA, NA, NA, "response"),
                remove = TRUE) %>%

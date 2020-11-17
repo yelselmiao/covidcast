@@ -25,6 +25,7 @@ weighted_interval_score <- function(quantile_forecasts, actual_value) {
   # (|y - median| + sum_k [alpha_k*width_k/2 + dfi_k]) / (num_intervals + 1)
   # where dfi_k = dist_from_interval_k
   if (is.na(actual_value)) return(NA)
+  quantile_forecasts <- quantile_forecasts %>% filter(!is.na(.data$probs))
   num_prob <- nrow(quantile_forecasts) # 23
   assert_that(num_prob %% 2 == 1 && num_prob >= 3,
               msg=paste("Number of predicted quantiles must be an odd number",
@@ -51,8 +52,8 @@ weighted_interval_score <- function(quantile_forecasts, actual_value) {
 
 #' Compute absolute error
 #'
-#' Computes absolute error between the actual value and the median of the
-#' forecast distribution.
+#' Computes absolute error between the actual value and the point forecast
+#' or median (if no point forecast exists) of the forecast distribution.
 #'
 #' @param quantile_forecasts Tibble of quantile forecasts.
 #' @param actual_value Actual value.
@@ -62,6 +63,10 @@ weighted_interval_score <- function(quantile_forecasts, actual_value) {
 #' @importFrom rlang .data
 #' @export
 absolute_error <- function(quantile_forecasts, actual_value) {
+  point_fcast <- which(is.na(quantile_forecasts$probs))
+  if (length(point_fcast) == 1) {
+    return(abs(quantile_forecasts$quantiles[point_fcast] - actual_value))
+  }
   quantile_forecasts %>%
       dplyr::filter(.data$probs == 0.5) %>%
       dplyr::transmute(err = abs(.data$quantiles - actual_value)) %>%
@@ -83,6 +88,7 @@ absolute_error <- function(quantile_forecasts, actual_value) {
 #' @export
 interval_coverage <- function(alpha) {
   function(quantile_forecasts, actual_value) {
+    quantile_forecasts <- quantile_forecasts %>% filter(!is.na(.data$probs))
     assert_that(any(abs(quantile_forecasts$probs - alpha / 2) < 1e-10) &&
                 any(abs(quantile_forecasts$probs - (1 - alpha / 2)) < 1e-10),
                 msg=paste("Forecaster must return values to cover a (1-alpha)",

@@ -122,12 +122,15 @@ evaluate_predictions_single_ahead <- function(predictions_cards,
   # column called forecast_date:
   predicted <- map2_dfr(predictions_cards, att$forecast_dates,
                         ~ mutate(.x, forecast_date = .y))
-  invalid <- check_valid_forecaster_output(predicted)
-  assert_that(nrow(invalid) == 0,
-              msg=paste0("The following `forecast_date`, `location` pairs have invalid ",
-                         "forecasts:\n", invalid %>%
-                                         stringr::str_glue_data("({forecast_date}, {location})") %>%
-                                         paste(collapse = "\n"), "."))
+  invalid <- find_invalid_forecaster_output(predicted)
+  assert_that(
+    nrow(invalid) == 0,
+    msg=paste0("The following `forecast_date`, `location` pairs have invalid ",
+               "forecasts:\n", 
+               invalid %>% 
+                 str_glue_data("({forecast_date}, {location})") %>%
+                 paste(collapse = "\n"), ".")
+    )
   # join together the data frames target_response and predicted:
   score_card <- target_response %>%
     inner_join(predicted, by = c("location", "forecast_date")) %>%
@@ -163,22 +166,37 @@ evaluate_predictions_single_ahead <- function(predictions_cards,
   return(score_card)
 }
 
-#' Check that a forecaster's output is valid
+check_probs <- function(card_probs, target){
+  exist_point <- any(is.na(target))
+  if (sum(is.na(card_probs)) > exist_point) return(FALSE)
+  card_probs <- card_probs[!is.na(card_probs)]
+  target <- target[!is.na(target)]
+  any(abs(card_probs - target) > 1e-8) # used to be "all"
+}
+
+#' Check if some of a  forecaster's output is invalid
+#' 
 #' @param pred_card Prediction card, in the form created by [get_predictions()].
 #' @export
-check_valid_forecaster_output <- function(pred_card) {
+find_invalid_forecaster_output <- function(pred_card) {
   null_forecasts <- pred_card$forecast_distribution %>%
     map_lgl(is.null)
-  covidhub_probs <- c(0.01, 0.025, seq(0.05, 0.95, by = 0.05), 0.975, 0.99)
+  #covidhub_probs <- c(0.01, 0.025, seq(0.05, 0.95, by = 0.05), 0.975, 0.99)
   wrong_format <- pred_card$forecast_distribution %>%
     map_lgl(~ any(names(.x) != c("probs", "quantiles")))
-  wrong_probs <- pred_card$forecast_distribution %>%
-    map_lgl(~ all(abs(.x$probs - covidhub_probs) > 1e-8))
+  multiple_point_fcasts <- pred_card$forecast_distribution %>%
+    map_lgl(~ (sum(is.na(.x$probs)) > 1))
+  pred_probs <- pred_card$forecast_distribution[[1]]$probs
+  mismatch_probs <- pred_card$forecast_distribution %>%
+    map_lgl(~ check_probs(.x$probs, pred_probs))
   bad_quantiles <- pred_card$forecast_distribution %>%
     map_lgl(~ all(diff(.x$quantiles) < -1e-8))
   pred_card %>%
     mutate(null_forecasts = null_forecasts,
-           wrong_probs = wrong_probs,
+           mismatch_probs = mismatch_probs,
+           multiple_point_fcasts = multiple_point_fcasts,
+           wrong_format = wrong_format,
            bad_quantiles = bad_quantiles) %>%
-    filter(null_forecasts | wrong_probs | bad_quantiles | wrong_format)
+    filter(multiple_point_fcasts | null_forecasts | mismatch_probs | 
+             bad_quantiles | wrong_format)
 }

@@ -90,7 +90,8 @@ get_predictions <- function(forecaster,
 #' @param forecaster Function that outputs a tibble with columns `ahead`,
 #'   `location`, `probs`, `quantiles`. The `quantiles` column gives the
 #'   predictive quantiles of the forecast distribution for that location and
-#'   ahead.
+#'   ahead. An `NA` in the `probs` column indicates a point forecast, possibly
+#'   different from the median.
 #' @param name_of_forecaster String indicating name of the forecaster.
 #' @template signals-template
 #' @template forecast_date-template
