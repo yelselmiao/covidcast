@@ -171,6 +171,7 @@ get_predictions_single_date <- function(forecaster,
            from_covidhub = FALSE,
            forecaster_params = list(...))
     )
+    class(pcards[[i]]) <- c("prediction_card", class(pcards[[i]]))
   }
   return(pcards)
 }
