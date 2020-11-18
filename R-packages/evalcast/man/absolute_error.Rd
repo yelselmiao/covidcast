@@ -12,6 +12,6 @@ absolute_error(quantile_forecasts, actual_value)
 \item{actual_value}{Actual value.}
 }
 \description{
-Computes absolute error between the actual value and the median of the
-forecast distribution.
+Computes absolute error between the actual value and the point forecast
+or median (if no point forecast exists) of the forecast distribution.
 }

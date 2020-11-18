@@ -4,7 +4,12 @@
 \alias{get_covidhub_predictions}
 \title{Get predictions from a forecaster on the COVID Hub}
 \usage{
-get_covidhub_predictions(covid_hub_forecaster_name, forecast_dates = NULL, ...)
+get_covidhub_predictions(
+  covid_hub_forecaster_name,
+  forecast_dates = NULL,
+  include_point = TRUE,
+  ...
+)
 }
 \arguments{
 \item{covid_hub_forecaster_name}{String indicating of the forecaster
@@ -14,6 +19,9 @@ get_covidhub_predictions(covid_hub_forecaster_name, forecast_dates = NULL, ...)
 "YYYY-MM-DD") indicating dates on which forecasts will be made. If \code{NULL},
 the default, then all currently available forecast dates from the given
 forecaster in the COVID Hub will be used.}
+
+\item{include_point}{logical indicating whether point forecasts should be
+kept (and added to the predictions cards) or removed}
 
 \item{...}{Additional parameters to be passed to \code{\link[=filter_predictions]{filter_predictions()}}.}
 }

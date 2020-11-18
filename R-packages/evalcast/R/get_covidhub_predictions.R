@@ -13,6 +13,8 @@
 #'   "YYYY-MM-DD") indicating dates on which forecasts will be made. If `NULL`,
 #'   the default, then all currently available forecast dates from the given
 #'   forecaster in the COVID Hub will be used.
+#' @param include_point logical indicating whether point forecasts should be 
+#'   kept (and added to the predictions cards) or removed
 #' @param ... Additional parameters to be passed to [filter_predictions()].
 #' @return List of predictions cards.
 #' 

@@ -21,7 +21,8 @@ get_predictions_single_date(
 \item{forecaster}{Function that outputs a tibble with columns \code{ahead},
 \code{location}, \code{probs}, \code{quantiles}. The \code{quantiles} column gives the
 predictive quantiles of the forecast distribution for that location and
-ahead.}
+ahead. An \code{NA} in the \code{probs} column indicates a point forecast, possibly
+different from the median.}
 
 \item{name_of_forecaster}{String indicating name of the forecaster.}
 

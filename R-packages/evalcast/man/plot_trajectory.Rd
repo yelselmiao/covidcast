@@ -8,7 +8,11 @@ plot_trajectory(
   list_of_predictions_cards,
   first_day = "2020-07-01",
   last_day = Sys.Date(),
-  alpha = 0.2
+  alpha = 0.2,
+  nrow = 6,
+  ncol = 4,
+  facets_per_page = 52,
+  force_single_page = FALSE
 )
 }
 \arguments{
@@ -22,6 +26,12 @@ forecasters}
 available (plus future, if forecasts are past today)}
 
 \item{alpha}{Displayed ribbons are the 1-alpha coverage results}
+
+\item{nrow}{number of rows in the facet display}
+
+\item{ncol}{number of columns in the facet display}
+
+\item{facets_per_page}{maximum facets per page}
 }
 \value{
 Produces a ggplot object
