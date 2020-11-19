@@ -6,6 +6,7 @@
 \usage{
 plot_trajectory(
   list_of_predictions_cards,
+  point_fcast = c("median", "point"),
   first_day = "2020-07-01",
   last_day = Sys.Date(),
   alpha = 0.2,
@@ -20,6 +21,9 @@ plot_trajectory(
 by \code{get_predictions()}. Supports collections of multiple forecast dates and
 forecasters}
 
+\item{point_fcast}{a character string, plot either the median (default) or
+a point forecast}
+
 \item{first_day}{the earliest date to display}
 
 \item{last_day}{the latest date to display. Defaults to the most recent data
@@ -32,6 +36,9 @@ available (plus future, if forecasts are past today)}
 \item{ncol}{number of columns in the facet display}
 
 \item{facets_per_page}{maximum facets per page}
+
+\item{force_single_page}{overrides the above faceting options and puts all
+facets in one figure}
 }
 \value{
 Produces a ggplot object

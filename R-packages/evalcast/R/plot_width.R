@@ -50,6 +50,8 @@ plot_width <- function(cards, alpha = 0.2, levels = c(0.5, 0.7, 0.9),
 #' @importFrom rlang .data
 #' @importFrom dplyr left_join filter transmute
 compute_width_single_distribution <- function(forecast_distribution) {
+  forecast_distribution <- forecast_distribution %>%
+    filter(!is.na(.data$probs))
   lower <- forecast_distribution %>% mutate(probs = round(.data$probs, 4))
   upper <- forecast_distribution %>% mutate(probs = round(1 - .data$probs, 4))
   lower %>%

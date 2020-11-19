@@ -92,28 +92,31 @@ aggregate_cards <- function(list_of_cards) {
 #' This is a generic method for dispatching to specific calls for evaluation and prediction cards.
 #' @param card Evaluation or prediction card.
 #' @return See `aggregate_cards`.
+#' @export
 unpack_single_card <- function(card){
   UseMethod("unpack_single_card", card)
 }
 
 #' Unpack a single prediction card into an unnested tibble
+#' @export
 unpack_single_card.prediction_card <- function(card) {
   card_attr <- attributes(card)
   card %>%
   tidyr::unnest(.data$forecast_distribution) %>%
   dplyr::mutate(
     ahead = card_attr$ahead,
-    data_source = card_attr$signals$data_source,
+    data_source = card_attr$signals$data_source[1],
     forecast_date = card_attr$forecast_date,
     geo_type = card_attr$geo_type,
     geo_values = card_attr$geo_values,
     incidence_period = card_attr$incidence_period,
     name_of_forecaster = card_attr$name_of_forecaster,
-    signal = card_attr$signals$signal
+    signal = card_attr$signals$signal[1]
   )
 }
 
 #' Unpack a single evaluation card into an unnested tibble
+#' @export
 unpack_single_card.evaluation_card <- function(card) {
   card_attr <- attributes(card)
   card %>%
