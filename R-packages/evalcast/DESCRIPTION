@@ -64,6 +64,9 @@ Imports:
     memoise,
     ggforce
 Suggests: 
-    testthat
+    testthat,
+    knitr,
+    rmarkdown
 Depends: 
     R (>= 3.5.0)
+VignetteBuilder: knitr

@@ -70,7 +70,7 @@ plot_trajectory <- function(list_of_predictions_cards,
         .data$incidence_period == "day", 
         .data$forecast_date + .data$ahead, # if true
         MMWRweek2Date( # epiweek, 
-          year(.data$forecast_date), # grab the year
+          lubridate::year(.data$forecast_date), # grab the year
           MMWRweek(.data$forecast_date)$MMWRweek + .data$ahead - # increment epiweek
             as.numeric(wday(.data$forecast_date) < 3)) # but current week if S or M
       )) %>%
